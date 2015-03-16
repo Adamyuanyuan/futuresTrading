@@ -20,10 +20,15 @@
 ##############################################################################
 
 modelOfdata <- function(data){
-	standardDev <-  19.41971; # 标准差
-	jianCang <- 1.8 * standardDev; # 建仓阈值
-	zhiSun <- 2 * standardDev; # 止损水平
-    pingCang <- 0.2 * standardDev; # 平仓阈值
+
+    jianCangThreshold <- 1.8; #建仓阈值参数等
+    zhiSunThreshold <- 2.0;
+    pingCangThreshold <- 0.2
+
+	standardDev <-  sd(data[,2]); # 标准差
+	jianCang <- jianCangThreshold * standardDev; # 建仓阈值
+	zhiSun <- zhiSunThreshold * standardDev; # 止损水平
+    pingCang <- pingCangThreshold * standardDev; # 平仓阈值
     rowLength <- nrow(data);
     isGuanzhu <- FALSE;
     isZhiSun <- FALSE;

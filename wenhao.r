@@ -25,9 +25,9 @@ modelOfdata <- function(data){
     zhiSunThreshold <- 2.0;
     pingCangThreshold <- 0.2
 
-	standardDev <-  sd(data[,2]); # 标准差
-	jianCang <- jianCangThreshold * standardDev; # 建仓阈值
-	zhiSun <- zhiSunThreshold * standardDev; # 止损水平
+    standardDev <-  sd(data[,2]); # 标准差
+    jianCang <- jianCangThreshold * standardDev; # 建仓阈值
+    zhiSun <- zhiSunThreshold * standardDev; # 止损水平
     pingCang <- pingCangThreshold * standardDev; # 平仓阈值
     rowLength <- nrow(data);
     isGuanzhu <- FALSE;
@@ -47,51 +47,51 @@ modelOfdata <- function(data){
     # 为了解决如果矩阵为0行情况下的bug，在此决定让矩阵前两行为0，这不是最优美的方法，但是简单实用
     j <- 2;
     for(i in seq(1:rowLength)){
-    	if(!isGuanzhu){
-    		if(data[i,2] >= jianCang){
-    			cat("开始关注：", i,"\n");
-    			isGuanzhu <- TRUE;
-    		}
-    		
-    	}else{
-    		if(!isJianCang){
+        if(!isGuanzhu){
+            if(data[i,2] >= jianCang){
+                cat("开始关注：", i,"\n");
+                isGuanzhu <- TRUE;
+            }
+            
+        }else{
+            if(!isJianCang){
 
                 # 如果是最后一次数据，则无论如何皆不建仓
-    			if((data[i,2] <= jianCang) && (i != rowLength)){
-    				j <- j+1;
-    				isJianCang <- TRUE;
-	    			cat("开始第",j-2,"次建仓:","时间：",i,"残差：",data[i,2],"\n");
-	    			arrayTime[j,1] <- i; #建仓时间点保存
-	    			arrayTime[j,2] <- data[i,2]; #建仓残差保存
-	    		}
+                if((data[i,2] <= jianCang) && (i != rowLength)){
+                    j <- j+1;
+                    isJianCang <- TRUE;
+                    cat("开始第",j-2,"次建仓:","时间：",i,"残差：",data[i,2],"\n");
+                    arrayTime[j,1] <- i; #建仓时间点保存
+                    arrayTime[j,2] <- data[i,2]; #建仓残差保存
+                }
 
-    		}else{
-    			if(data[i,2] <= pingCang){
-    				isGuanzhu <- FALSE;
-    				isJianCang <- FALSE;
-    				arrayTime[j,3] <- i; #平仓时间点
-    				arrayTime[j,4] <- data[i,2]; #平仓残差
-    				arrayTime[j,5] <- arrayTime[j,3] - arrayTime[j,1]; # 持有期
-    				arrayTime[j,6] <- abs(arrayTime[j,2] - arrayTime[j,4]); # 收益
-					cat("开始第",j-2,"次平仓:","时间：",i,"残差：",data[i,2],"\n")
-    			}else{
+            }else{
+                if(data[i,2] <= pingCang){
+                    isGuanzhu <- FALSE;
+                    isJianCang <- FALSE;
+                    arrayTime[j,3] <- i; #平仓时间点
+                    arrayTime[j,4] <- data[i,2]; #平仓残差
+                    arrayTime[j,5] <- arrayTime[j,3] - arrayTime[j,1]; # 持有期
+                    arrayTime[j,6] <- abs(arrayTime[j,2] - arrayTime[j,4]); # 收益
+                    cat("开始第",j-2,"次平仓:","时间：",i,"残差：",data[i,2],"\n")
+                }else{
 
                     # 如果是最后一次数据，如果此时已经建仓，则无论如何皆止损
-    				if((data[i,2] >= zhiSun) || (i == rowLength)){
-    					isGuanzhu <- FALSE;
-    					isJianCang <- FALSE;
-    					arrayTime[j,7] <- i; # 止损时间点
-    					arrayTime[j,8] <- data[i,2]; #止损残差
-    					arrayTime[j,9] <- arrayTime[j,7] - arrayTime[j,1]; #止损期
-    					arrayTime[j,10] <- -abs(arrayTime[j,2] - arrayTime[j,8]);
-						cat("开始第",j-2,"次止损:","时间：",i,"残差：",data[i,2],"\n")
-    				}
-    			}
+                    if((data[i,2] >= zhiSun) || (i == rowLength)){
+                        isGuanzhu <- FALSE;
+                        isJianCang <- FALSE;
+                        arrayTime[j,7] <- i; # 止损时间点
+                        arrayTime[j,8] <- data[i,2]; #止损残差
+                        arrayTime[j,9] <- arrayTime[j,7] - arrayTime[j,1]; #止损期
+                        arrayTime[j,10] <- -abs(arrayTime[j,2] - arrayTime[j,8]);
+                        cat("开始第",j-2,"次止损:","时间：",i,"残差：",data[i,2],"\n")
+                    }
+                }
 
-    		}
-    		
+            }
+            
 
-    	}
+        }
 
     }
     cat("交易次数：", j-2,"\n");
@@ -102,43 +102,43 @@ modelOfdata <- function(data){
 
 
 modelOfTransaction <- function(fileName){
-	file <- read.table(fileName);
+    file <- read.table(fileName);
 
-	arrayTime1 <- modelOfdata(file);
+    arrayTime1 <- modelOfdata(file);
     # cat("正残差处理结果：\n");
-	# print(arrayTime1);	
+    # print(arrayTime1);    
 
-	reversedData <- file; #将数据取反之后再处理一遍
-	reversedData[,2] <- -file[,2];
+    reversedData <- file; #将数据取反之后再处理一遍
+    reversedData[,2] <- -file[,2];
     
     arrayTime2 <- modelOfdata(reversedData);
     # cat("负残差处理结果：\n");
-	# print(arrayTime2);
+    # print(arrayTime2);
 
     arrayTime2[,c(2,4,8)] <- -arrayTime2[,c(2,4,8)];
 
-	arrayTimeTotal <- rbind(arrayTime1,arrayTime2);
+    arrayTimeTotal <- rbind(arrayTime1,arrayTime2);
 
-	
-	print("融合后的结果："); 
-	print(arrayTimeTotal);
+    
+    print("融合后的结果："); 
+    print(arrayTimeTotal);
 
-	transNum <- nrow(arrayTimeTotal) - 4;
-	pingCangNum <- length(arrayTimeTotal[,3][arrayTimeTotal[,3]>0]);#成功交易的数量
-	zhisunNum <- length(arrayTimeTotal[,7][arrayTimeTotal[,7]>0]); # pingCangNum + zhisunNum <= transNum
-	averageTransTime <- sum(arrayTimeTotal[,5])/pingCangNum;
-	averageZhiSunTime <- sum(arrayTimeTotal[,9])/zhisunNum;
-	totalRevenue <- sum(arrayTimeTotal[,6]);
-	totalLoss <- sum(arrayTimeTotal[,10]); #在此为负数
-	grossProfit <- totalRevenue + totalLoss;
-	
+    transNum <- nrow(arrayTimeTotal) - 4;
+    pingCangNum <- length(arrayTimeTotal[,3][arrayTimeTotal[,3]>0]);#成功交易的数量
+    zhisunNum <- length(arrayTimeTotal[,7][arrayTimeTotal[,7]>0]); # pingCangNum + zhisunNum <= transNum
+    averageTransTime <- sum(arrayTimeTotal[,5])/pingCangNum;
+    averageZhiSunTime <- sum(arrayTimeTotal[,9])/zhisunNum;
+    totalRevenue <- sum(arrayTimeTotal[,6]);
+    totalLoss <- sum(arrayTimeTotal[,10]); #在此为负数
+    grossProfit <- totalRevenue + totalLoss;
+    
 
-	cat("————————————————最终结果：————————————————\n");
-	cat("交易次数：",transNum,"成功交易次数：",pingCangNum,"平均成功交易时间：",averageTransTime,"总收益：",totalRevenue,"\n");
-	cat("止损交易次数：",zhisunNum,"平均止损交易时间：",averageZhiSunTime,"总亏损",totalLoss,"\n");
-	cat("总利润：",grossProfit,"\n");
-	cat(totalRevenue,totalLoss,grossProfit);
-	cat("\n——————————————————— O(∩_∩)O ——————————————————\n");
+    cat("————————————————最终结果：————————————————\n");
+    cat("交易次数：",transNum,"成功交易次数：",pingCangNum,"平均成功交易时间：",averageTransTime,"总收益：",totalRevenue,"\n");
+    cat("止损交易次数：",zhisunNum,"平均止损交易时间：",averageZhiSunTime,"总亏损",totalLoss,"\n");
+    cat("总利润：",grossProfit,"\n");
+    cat(totalRevenue,totalLoss,grossProfit);
+    cat("\n——————————————————— O(∩_∩)O ——————————————————\n");
 
     # result 输出到文件
 

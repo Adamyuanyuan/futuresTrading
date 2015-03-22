@@ -17,6 +17,8 @@
 # 2. 解决了最后一次必须不能建仓的bug
 # 3. 可以将结果直接导入txt
 # 4. 解决了数据为0的时候的bug
+# @Date: 2015.3.22
+# 5. 解决了最后时刻只考虑止损的情况，因为也有可能是会有收益
 ##############################################################################
 
 modelOfdata <- function(data){
@@ -66,7 +68,8 @@ modelOfdata <- function(data){
                 }
 
             }else{
-                if(data[i,2] <= pingCang){
+                # 如果是最后一次数据，如果此时已经建仓，并且当前的残差大于建仓时的残差，则无论如何皆平仓
+                if((data[i,2] <= pingCang) || ((i == rowLength) && (data[i,2] >= array[j,4]))){
                     isGuanzhu <- FALSE;
                     isJianCang <- FALSE;
                     arrayTime[j,3] <- i; #平仓时间点
@@ -76,8 +79,8 @@ modelOfdata <- function(data){
                     cat("开始第",j-2,"次平仓:","时间：",i,"残差：",data[i,2],"\n")
                 }else{
 
-                    # 如果是最后一次数据，如果此时已经建仓，则无论如何皆止损
-                    if((data[i,2] >= zhiSun) || (i == rowLength)){
+                    # 如果是最后一次数据，如果此时已经建仓，并且当前的残差小于建仓时的残差，则无论如何皆止损
+                    if((data[i,2] >= zhiSun) || ((i == rowLength) && (data[i,2] <= array[j,4]))){
                         isGuanzhu <- FALSE;
                         isJianCang <- FALSE;
                         arrayTime[j,7] <- i; # 止损时间点
